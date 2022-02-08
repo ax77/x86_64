@@ -20,7 +20,7 @@ public class Asm {
   }
 
   public int[] toU8Bytes() {
-    return strm.toU8Bytes();
+    return strm.toBytes();
   }
 
   public void push_rbp() {

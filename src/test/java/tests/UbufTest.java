@@ -1,12 +1,13 @@
 package tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -61,4 +62,26 @@ public class UbufTest {
     return bos.toByteArray();
   }
 
+  @Test
+  public void testNeg1() {
+    Ubuf strm = new Ubuf();
+    strm.oi4(-1);
+    int bytes[] = strm.toBytes();
+    assertEquals(4, bytes.length);
+    assertEquals(0xff, bytes[0]);
+    assertEquals(0xff, bytes[1]);
+    assertEquals(0xff, bytes[2]);
+    assertEquals(0xff, bytes[3]);
+  }
+
+  @Test
+  public void testNeg2() {
+    Ubuf strm = new Ubuf();
+    strm.oi4(-32768);
+    int bytes[] = strm.toBytes();
+    int expect[] = { 0x00, 0x80, 0xff, 0xff };
+
+    assertTrue(Arrays.equals(bytes, expect));
+
+  }
 }

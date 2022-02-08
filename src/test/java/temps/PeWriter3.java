@@ -1,9 +1,7 @@
-package tests;
+package temps;
 
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static pe.sections.SectionsIndexesLight.DATA;
 import static pe.sections.SectionsIndexesLight.IDATA;
 import static pe.sections.SectionsIndexesLight.TEXT;
@@ -14,6 +12,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import asm.Asm;
 import constants.Alignment;
 import constants.Sizeofs;
 import pe.DosStub;
@@ -30,26 +29,11 @@ import pe.imports.ImportSymbols;
 import pe.sections.SectionHeadersBuilder;
 import pe.sections.SectionSize;
 import pe.sections.SectionsIndexesLight;
-import writers.Diff;
 import writers.IDataWriter;
-import writers.IO;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class PeWriter {
-
-  /// import_symbols construct_iat()
-  /// {
-  ///     import_symbols imports;
-  ///     imports.add_dll("KERNEL32.dll")
-  ///         .import_procedure("ExitProcess", 0x120);
-  ///     imports.add_dll("msvcrt.dll")
-  ///         .import_procedure("printf", 0x48b)
-  ///         .import_procedure("scanf", 0x49b);
-  ///     imports.prepare();
-  /// 
-  ///     return imports;
-  /// }
+public class PeWriter3 {
 
   private ImportSymbols construct_iat() {
     ImportSymbols imports = new ImportSymbols();
@@ -60,6 +44,7 @@ public class PeWriter {
     final ImportDll msvcrtDLL = new ImportDll("msvcrt.dll");
     msvcrtDLL.add_procedure(new ImageImportByName("printf", 0x48b));
     msvcrtDLL.add_procedure(new ImageImportByName("scanf", 0x49b));
+    msvcrtDLL.add_procedure(new ImageImportByName("strlen", 0));
 
     imports.add_dll(kernelDLL);
     imports.add_dll(msvcrtDLL);
@@ -71,23 +56,14 @@ public class PeWriter {
   @Test
   public void write() throws IOException {
 
+    String fmt = "%d";
+
     // stub data
     DataSymbols datas = new DataSymbols();
-    datas.add("zzzzz");
+    datas.add(fmt);
 
     // stub import
     ImportSymbols imports = construct_iat();
-
-    // stub code
-    /// push   rbp
-    /// mov    rbp,rsp
-    /// mov    rax,0x20
-    /// mov    rsp,rbp
-    /// pop    rbp
-    /// ret
-    int bytes[] = { 0x55, 0x48, 0x89, 0xE5, 0x48, 0xC7, 0xC0, 0x20, 0x00, 0x00, 0x00, 0x48, 0x89, 0xEC, 0x5D, 0xC3 };
-    Ubuf code = new Ubuf();
-    code.oArr(bytes);
 
     SectionHeadersBuilder sBuilder = new SectionHeadersBuilder();
     sBuilder.add(".text", new SectionSize(512/*TODO, it's a stub :)*/), SectionsIndexesLight.flags(TEXT));
@@ -139,36 +115,37 @@ public class PeWriter {
       s.write(strm);
     }
 
+    Asm asm = new Asm(imports, datas, sec_headers.get(TEXT).VirtualAddress);
+    asm.push_rbp();
+    asm.mov_rbp_rsp();
+
+    asm.sub_rsp_u8(64);
+    asm.mov_rdx_i32(32);
+    asm.lea_rcx_str_label(fmt);
+    asm.call("printf");
+    asm.add_rsp_u8(64);
+
+    asm.mov_rax_i32(0);
+    asm.mov_rsp_rbp();
+    asm.pop_rbp();
+    asm.ret();
+    ///
+
     // 3. section binary data
-    write_section(strm, code.toBytes());
+    write_section(strm, asm.toU8Bytes());
     write_section(strm, datas.build());
     write_section(strm, imports.build());
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pefile.exe";
+    String filename = dir + "/fcall.exe";
     strm.fout(filename);
     chmodX(filename);
 
-    File f1 = new File(filename);
-    File f2 = new File(dir + "/evmc.exe");
-    boolean diff = Diff.findDiff(IO.toBytes(f1), IO.toBytes(f2), false);
-    assertFalse(diff);
-
-    /// exit   12288
-    /// printf 12304
-    /// scanf  12312
-    /// zzzzz  8192
-    /// System.out.println("exit   " + imports.import_symbol("ExitProcess"));
-    /// System.out.println("printf " + imports.import_symbol("printf"));
-    /// System.out.println("scanf  " + imports.import_symbol("scanf"));
-    /// System.out.println("zzzzz  " + datas.symbol("zzzzz"));
-
-    assertEquals(12288, imports.symbol("ExitProcess"));
-    assertEquals(12304, imports.symbol("printf"));
-    assertEquals(12312, imports.symbol("scanf"));
-    assertEquals(8192, datas.symbol("zzzzz"));
-
+    //    imports.symbol("ExitProcess");
+    //    imports.symbol("printf");
+    //    imports.symbol("scanf");
+    //    imports.symbol("strlen");
   }
 
   private void chmodX(String filename) {

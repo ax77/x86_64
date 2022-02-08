@@ -52,6 +52,9 @@ public class Ubuf implements IDataWriter {
   public static final long U16_MAX = 65535;
   public static final long U32_MAX = 4294967295L;
 
+  public static final long i32_MIN = -2147483648;
+  public static final long i32_MAX = +2147483647;
+
   public Ubuf() {
     this.alloc = 8;
     this.buf = emptyTab(this.alloc);
@@ -101,6 +104,12 @@ public class Ubuf implements IDataWriter {
     out(new Uv(v, 4));
   }
 
+  /// i32
+  public void oi4(long v) {
+    ilim(v, i32_MIN, i32_MAX);
+    out(new Uv(v, 4));
+  }
+
   public void o3(long v) {
     lim(v, U32_MAX);
     out(new Uv(v, 3));
@@ -133,6 +142,15 @@ public class Ubuf implements IDataWriter {
     }
   }
 
+  private void ilim(long v, long min, long max) {
+    if (v > max) {
+      throw new NumberFormatException("Value is out of range: " + v + ", limit is: " + max);
+    }
+    if (v < min) {
+      throw new NumberFormatException("Value is out of range: " + v + ", limit is: " + max);
+    }
+  }
+
   public int count() {
     return count;
   }
@@ -160,7 +178,7 @@ public class Ubuf implements IDataWriter {
     }
   }
 
-  public int[] toU8Bytes() {
+  public int[] toBytes() {
 
     int result[] = new int[bytes];
     int offset = 0;
@@ -174,46 +192,46 @@ public class Ubuf implements IDataWriter {
       }
       if (u.sz == 2) {
         result[offset++] = (int) (v & 0xff);
-        result[offset++] = (int) (v >> 8 & 0xff);
+        result[offset++] = (int) (v >>> 8 & 0xff);
       }
       if (u.sz == 3) {
         result[offset++] = (int) (v & 0xff);
-        result[offset++] = (int) (v >> 8 & 0xff);
-        result[offset++] = (int) (v >> 16 & 0xff);
+        result[offset++] = (int) (v >>> 8 & 0xff);
+        result[offset++] = (int) (v >>> 16 & 0xff);
       }
       if (u.sz == 4) {
         result[offset++] = (int) (v & 0xff);
-        result[offset++] = (int) (v >> 8 & 0xff);
-        result[offset++] = (int) (v >> 16 & 0xff);
-        result[offset++] = (int) (v >> 24 & 0xff);
+        result[offset++] = (int) (v >>> 8 & 0xff);
+        result[offset++] = (int) (v >>> 16 & 0xff);
+        result[offset++] = (int) (v >>> 24 & 0xff);
       }
       if (u.sz == 8) {
         result[offset++] = (int) (v & 0xff);
-        result[offset++] = (int) (v >> 8 & 0xff);
-        result[offset++] = (int) (v >> 16 & 0xff);
-        result[offset++] = (int) (v >> 24 & 0xff);
-        result[offset++] = (int) (v >> 32 & 0xff);
-        result[offset++] = (int) (v >> 40 & 0xff);
-        result[offset++] = (int) (v >> 48 & 0xff);
-        result[offset++] = (int) (v >> 56 & 0xff);
+        result[offset++] = (int) (v >>> 8 & 0xff);
+        result[offset++] = (int) (v >>> 16 & 0xff);
+        result[offset++] = (int) (v >>> 24 & 0xff);
+        result[offset++] = (int) (v >>> 32 & 0xff);
+        result[offset++] = (int) (v >>> 40 & 0xff);
+        result[offset++] = (int) (v >>> 48 & 0xff);
+        result[offset++] = (int) (v >>> 56 & 0xff);
       }
     }
 
     return result;
   }
 
-  public byte[] toBytes() {
-    int x[] = toU8Bytes();
-    byte b[] = new byte[x.length];
-    for (int i = 0; i < x.length; i += 1) {
-      b[i] = (byte) (x[i] & 255);
-    }
-    return b;
-  }
+  /// public byte[] toBytes() {
+  ///   int x[] = toU8Bytes();
+  ///   byte b[] = new byte[x.length];
+  ///   for (int i = 0; i < x.length; i += 1) {
+  ///     b[i] = (byte) (x[i] & 255);
+  ///   }
+  ///   return b;
+  /// }
 
   public void fout(String filename) throws IOException {
     FileOutputStream fos = new FileOutputStream(filename);
-    int[] x = toU8Bytes();
+    int[] x = toBytes();
     for (int i = 0; i < x.length; i += 1) {
       fos.write(x[i]);
     }

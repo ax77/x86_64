@@ -34,7 +34,7 @@ public class DataSymbols {
   }
 
   public int[] build() {
-    return strm.toU8Bytes();
+    return strm.toBytes();
   }
 
   public void set_rva(long addr) {

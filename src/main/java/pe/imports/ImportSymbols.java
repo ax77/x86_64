@@ -189,7 +189,7 @@ public class ImportSymbols {
       }
     }
 
-    return strm.toU8Bytes();
+    return strm.toBytes();
   }
 
   //TODO:test
