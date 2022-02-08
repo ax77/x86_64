@@ -18,6 +18,7 @@ public class IO {
     byte[] b = new byte[(int) f.length()];
     FileInputStream fis = new FileInputStream(f);
     fis.read(b);
+    fis.close();
     return b;
   }
 
@@ -28,7 +29,7 @@ public class IO {
   }
 
   public static File[] findFiles(File dir, FilenameFilter filter) {
-    Set<File> files = new HashSet();
+    Set<File> files = new HashSet<File>();
     findFiles(dir, filter, files);
     return files.toArray(new File[0]);
   }

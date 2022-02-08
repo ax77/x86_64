@@ -1,15 +1,19 @@
 package tests;
 
-import constants.Sizeofs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.Test;
+
+import constants.Sizeofs;
 import x86_64.imports.ImageImportByName;
 import x86_64.imports.ImportDll;
 import x86_64.imports.ImportSymbols;
-
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class TestDlls {
 

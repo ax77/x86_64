@@ -26,8 +26,8 @@ import x86_64.ImageOptionalHeader64;
 import x86_64.ImageSectionHeader;
 import x86_64.PE64;
 import x86_64.datas.DataSymbols;
-import x86_64.imports.ImportDll;
 import x86_64.imports.ImageImportByName;
+import x86_64.imports.ImportDll;
 import x86_64.imports.ImportSymbols;
 import x86_64.sections.SectionHeadersBuilder;
 import x86_64.sections.SectionSize;
@@ -142,10 +142,10 @@ public class PeWriter2 {
     strm.fout(filename);
     chmodX(filename);
 
-//    imports.symbol("ExitProcess");
-//    imports.symbol("printf");
-//    imports.symbol("scanf");
-//    imports.symbol("strlen");
+    //    imports.symbol("ExitProcess");
+    //    imports.symbol("printf");
+    //    imports.symbol("scanf");
+    //    imports.symbol("strlen");
   }
 
   private void chmodX(String filename) {
