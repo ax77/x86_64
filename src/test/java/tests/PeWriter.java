@@ -1,4 +1,4 @@
-package x86_64;
+package tests;
 
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
@@ -20,6 +20,13 @@ import writers.IDataWriter;
 import writers.IO;
 import writers.SizeUtil;
 import writers.Ubuf;
+import x86_64.DosStub;
+import x86_64.ImageDosHeader;
+import x86_64.ImageFileHeader;
+import x86_64.ImageNtHeader64;
+import x86_64.ImageOptionalHeader64;
+import x86_64.ImageSectionHeader;
+import x86_64.PE64;
 import x86_64.datas.DataSymbols;
 import x86_64.imports.ImportDll;
 import x86_64.imports.ImageImportByName;

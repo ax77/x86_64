@@ -70,7 +70,7 @@ public class ImageOptionalHeader64 {
   /*uint64_t */ long SizeOfHeapCommit;
   /*uint32_t */ long LoaderFlags;
   /*uint32_t */ long NumberOfRvaAndSizes;
-  ImageDataDirectory DataDirectory[];
+  public ImageDataDirectory DataDirectory[];
 
   public ImageOptionalHeader64(long sizeOfCode, long sizeOfInitializedData, long addressOfEntryPoint, long baseOfCode,
       long sizeOfImage, long sizeOfHeaders) {

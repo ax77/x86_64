@@ -8,8 +8,8 @@ import writers.IDataWriter;
 /// } IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
 
 public class ImageDataDirectory {
-  long VirtualAddress;
-  long Size;
+  public long VirtualAddress;
+  public long Size;
 
   public ImageDataDirectory() {
 
