@@ -1,4 +1,4 @@
-package x86_64.datas;
+package pe.datas;
 
 import java.util.HashMap;
 import java.util.Map;

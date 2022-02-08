@@ -1,12 +1,12 @@
-package x86_64.sections;
+package pe.sections;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import constants.Alignment;
 import constants.Sizeofs;
+import pe.ImageSectionHeader;
 import writers.SizeUtil;
-import x86_64.ImageSectionHeader;
 
 public class SectionHeadersBuilder {
   private List<SectionHeaderDesc> descs;

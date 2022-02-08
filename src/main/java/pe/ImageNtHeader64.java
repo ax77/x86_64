@@ -1,4 +1,4 @@
-package x86_64;
+package pe;
 
 import constants.Magics;
 import writers.IDataWriter;

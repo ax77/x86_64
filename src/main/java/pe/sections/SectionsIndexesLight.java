@@ -1,4 +1,4 @@
-package x86_64.sections;
+package pe.sections;
 
 import static constants.SectionFlag.IMAGE_SCN_CNT_CODE;
 import static constants.SectionFlag.IMAGE_SCN_CNT_INITIALIZED_DATA;

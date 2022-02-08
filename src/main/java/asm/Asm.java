@@ -1,9 +1,9 @@
-package x86_64;
+package asm;
 
 import constants.Sizeofs;
+import pe.datas.DataSymbols;
+import pe.imports.ImportSymbols;
 import writers.Ubuf;
-import x86_64.datas.DataSymbols;
-import x86_64.imports.ImportSymbols;
 
 public class Asm {
   private final Ubuf strm;

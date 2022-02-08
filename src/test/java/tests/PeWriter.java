@@ -4,9 +4,9 @@ import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static x86_64.sections.SectionsIndexesLight.DATA;
-import static x86_64.sections.SectionsIndexesLight.IDATA;
-import static x86_64.sections.SectionsIndexesLight.TEXT;
+import static pe.sections.SectionsIndexesLight.DATA;
+import static pe.sections.SectionsIndexesLight.IDATA;
+import static pe.sections.SectionsIndexesLight.TEXT;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,25 +16,25 @@ import org.junit.Test;
 
 import constants.Alignment;
 import constants.Sizeofs;
+import pe.DosStub;
+import pe.ImageDosHeader;
+import pe.ImageFileHeader;
+import pe.ImageNtHeader64;
+import pe.ImageOptionalHeader64;
+import pe.ImageSectionHeader;
+import pe.PE64;
+import pe.datas.DataSymbols;
+import pe.imports.ImageImportByName;
+import pe.imports.ImportDll;
+import pe.imports.ImportSymbols;
+import pe.sections.SectionHeadersBuilder;
+import pe.sections.SectionSize;
+import pe.sections.SectionsIndexesLight;
 import writers.Diff;
 import writers.IDataWriter;
 import writers.IO;
 import writers.SizeUtil;
 import writers.Ubuf;
-import x86_64.DosStub;
-import x86_64.ImageDosHeader;
-import x86_64.ImageFileHeader;
-import x86_64.ImageNtHeader64;
-import x86_64.ImageOptionalHeader64;
-import x86_64.ImageSectionHeader;
-import x86_64.PE64;
-import x86_64.datas.DataSymbols;
-import x86_64.imports.ImageImportByName;
-import x86_64.imports.ImportDll;
-import x86_64.imports.ImportSymbols;
-import x86_64.sections.SectionHeadersBuilder;
-import x86_64.sections.SectionSize;
-import x86_64.sections.SectionsIndexesLight;
 
 public class PeWriter {
 

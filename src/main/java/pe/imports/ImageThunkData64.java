@@ -1,4 +1,4 @@
-package x86_64.imports;
+package pe.imports;
 
 /// typedef struct _IMAGE_THUNK_DATA64 {
 ///   union {

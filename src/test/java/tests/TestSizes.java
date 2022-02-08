@@ -7,15 +7,15 @@ import java.io.IOException;
 import org.junit.Test;
 
 import constants.Sizeofs;
+import pe.DosStub;
+import pe.ImageDosHeader;
+import pe.ImageFileHeader;
+import pe.ImageNtHeader64;
+import pe.ImageOptionalHeader64;
+import pe.ImageSectionHeader;
+import pe.PE64;
+import pe.imports.ImageImportDescriptor;
 import writers.Ubuf;
-import x86_64.DosStub;
-import x86_64.ImageDosHeader;
-import x86_64.ImageFileHeader;
-import x86_64.ImageImportDescriptor;
-import x86_64.ImageNtHeader64;
-import x86_64.ImageOptionalHeader64;
-import x86_64.ImageSectionHeader;
-import x86_64.PE64;
 
 public class TestSizes {
 

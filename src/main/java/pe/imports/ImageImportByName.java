@@ -1,4 +1,4 @@
-package x86_64.imports;
+package pe.imports;
 
 public class ImageImportByName {
 

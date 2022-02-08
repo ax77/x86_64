@@ -1,4 +1,4 @@
-package x86_64.imports;
+package pe.imports;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,6 @@ import java.util.List;
 import constants.Sizeofs;
 import writers.SizeUtil;
 import writers.Ubuf;
-import x86_64.ImageImportDescriptor;
 
 public class ImportSymbols {
   private List<ImportDll> import_dlls;

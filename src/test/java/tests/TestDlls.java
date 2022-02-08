@@ -11,9 +11,9 @@ import java.util.UUID;
 import org.junit.Test;
 
 import constants.Sizeofs;
-import x86_64.imports.ImageImportByName;
-import x86_64.imports.ImportDll;
-import x86_64.imports.ImportSymbols;
+import pe.imports.ImageImportByName;
+import pe.imports.ImportDll;
+import pe.imports.ImportSymbols;
 
 public class TestDlls {
 

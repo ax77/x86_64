@@ -1,4 +1,4 @@
-package x86_64.imports;
+package pe.imports;
 
 import java.util.ArrayList;
 import java.util.List;

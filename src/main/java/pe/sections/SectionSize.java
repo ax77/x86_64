@@ -1,4 +1,4 @@
-package x86_64.sections;
+package pe.sections;
 
 public class SectionSize {
   public long virtual;
