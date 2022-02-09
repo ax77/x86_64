@@ -1,6 +1,6 @@
 package asm5;
 
-import static asm5.Reg.rax;
+import static asm5.Reg.*;
 import static asm5.Reg.rbp;
 import static asm5.Reg.rsp;
 import static org.junit.Assert.assertEquals;
@@ -16,6 +16,11 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import constants.Sizeofs;
+import pe.datas.DataSymbols;
+import pe.imports.ImageImportByName;
+import pe.imports.ImportDll;
+import pe.imports.ImportSymbols;
 import writers.Ubuf;
 
 public class Test5 {
@@ -151,11 +156,25 @@ public class Test5 {
 
   class flow {
     final long codeRva;
+    final ImportSymbols imports;
+    final DataSymbols datas;
+
     final List<instr> instr;
     final Map<String, Long> labelsOffset;
     boolean finalized;
 
-    public flow(long codeRva) {
+    // this one for unit tests
+    public flow() {
+      this.codeRva = 0;
+      this.imports = new ImportSymbols();
+      this.datas = new DataSymbols();
+      this.instr = new ArrayList<>();
+      this.labelsOffset = new HashMap<>();
+    }
+
+    public flow(ImportSymbols imports, DataSymbols datas, long codeRva) {
+      this.imports = imports;
+      this.datas = datas;
       this.codeRva = codeRva;
       this.instr = new ArrayList<>();
       this.labelsOffset = new HashMap<>();
@@ -202,6 +221,12 @@ public class Test5 {
       append(i);
     }
 
+    public void mov(Reg dst, int i32) {
+      int buf[] = Bin.emit_mov_imm32_reg(dst, i32);
+      instr i = new instr(itype.mov_r_imm32, new operand(dst), buf);
+      append(i);
+    }
+
     public void sub(Reg reg, int imm) {
       int buf[] = Bin.emit_alu_imm32_reg(ALU.ALU_SUB, imm, reg);
       instr i = new instr(itype.sub_r_imm32, new operand(reg), new operand(imm_size.imm32, imm), buf);
@@ -233,6 +258,53 @@ public class Test5 {
       for (int i = 0; i < howMany; i += 1) {
         nop();
       }
+    }
+
+    private void rip_rel(Ubuf strm, long abs, long extraBytesBefore) {
+      long rip = codeRva + bytes() + Sizeofs.SIZEOF_DWORD + extraBytesBefore;
+      long rel_addr = abs - rip;
+      strm.oi4(rel_addr);
+    }
+    /// 
+    /// public void lea_rcx_str_label(String sym) {
+    ///   strm.o1(0x48);
+    ///   strm.o1(0x8D);
+    ///   strm.o1(0x0D);
+    ///   rip_rel(new rip_relative(datas.symbol(sym)));
+    /// }
+    /// 
+    /// 
+    /// public void call(String sym) {
+    ///   strm.o1(0xFF);
+    ///   strm.o1(0x15);
+    ///   rip_rel(new rip_relative(imports.symbol(sym)));
+    /// }
+
+    public void call(String sym) {
+      Ubuf strm = new Ubuf();
+      strm.o1(0xFF);
+      strm.o1(0x15);
+
+      long addr = imports.symbol(sym);
+      rip_rel(strm, addr, 2); // two extra bytes before
+
+      // instruction
+      instr i = new instr(itype.call, strm.toBytes());
+      append(i);
+    }
+
+    public void load_rcx_sym(String sym) {
+      Ubuf strm = new Ubuf();
+      strm.o1(0x48);
+      strm.o1(0x8D);
+      strm.o1(0x0D);
+
+      long addr = datas.symbol(sym);
+      rip_rel(strm, addr, 3); // three extra bytes before
+
+      // instruction
+      instr i = new instr(itype.load_data, strm.toBytes());
+      append(i);
     }
 
     public void commit() {
@@ -311,7 +383,7 @@ public class Test5 {
     }
 
     public int bytes() {
-      assertFinalized();
+      //assertFinalized();
 
       int n = 0;
       for (instr i : instr) {
@@ -404,7 +476,7 @@ public class Test5 {
 
   @Test
   public void test1() {
-    flow asm = new flow(0);
+    flow asm = new flow();
     asm.push(Reg.rbp);
     asm.commit();
 
@@ -414,7 +486,7 @@ public class Test5 {
 
   @Test
   public void test2() {
-    flow asm = new flow(0);
+    flow asm = new flow();
     asm.push(rbp);
     asm.mov(rbp, rsp);
     asm.sub(rsp, 256);
@@ -437,7 +509,7 @@ public class Test5 {
   public void testJumpForward() {
     String out = "out";
 
-    flow asm = new flow(0);
+    flow asm = new flow();
     asm.push(rax);
 
     asm.jmp(out);
@@ -473,6 +545,96 @@ public class Test5 {
 
     //System.out.println(asm);
     //System.out.println(asm.printBytes());
+  }
+
+  private ImportSymbols imports() {
+    ImportSymbols imports = new ImportSymbols();
+
+    final ImportDll kernelDLL = new ImportDll("KERNEL32.dll");
+    kernelDLL.add_procedure(new ImageImportByName("ExitProcess", 0x120));
+
+    final ImportDll msvcrtDLL = new ImportDll("msvcrt.dll");
+    msvcrtDLL.add_procedure(new ImageImportByName("printf", 0x48b));
+    msvcrtDLL.add_procedure(new ImageImportByName("scanf", 0x49b));
+    msvcrtDLL.add_procedure(new ImageImportByName("strlen", 0));
+
+    imports.add_dll(kernelDLL);
+    imports.add_dll(msvcrtDLL);
+
+    imports.prepare();
+    return imports;
+  }
+
+  private DataSymbols datas() {
+    String fmt = "%d";
+    DataSymbols datas = new DataSymbols();
+    datas.add(fmt);
+    return datas;
+  }
+
+  @Test
+  public void testFull() {
+    /// Asm asm = new Asm(imports, datas, sec_headers.get(TEXT).VirtualAddress);
+    /// asm.push_rbp();
+    /// asm.mov_rbp_rsp();
+    /// 
+    /// asm.sub_rsp_u8(64);
+    /// asm.mov_rdx_i32(32);
+    /// asm.lea_rcx_str_label(fmt);
+    /// asm.call("printf");
+    /// asm.add_rsp_u8(64);
+    /// 
+    /// asm.mov_rax_i32(0);
+    /// asm.mov_rsp_rbp();
+    /// asm.pop_rbp();
+    /// asm.ret();
+    /// 
+    ///
+    ///
+    /// fcall.exe:     file format pei-x86-64
+    /// 
+    /// 
+    /// Disassembly of section .text:
+    /// 
+    /// 0000000140001000 <.text>:
+    ///    140001000: 55                    push   rbp
+    ///    140001001: 48 89 e5              mov    rbp,rsp
+    ///    140001004: 48 83 ec 40           sub    rsp,0x40
+    ///    140001008: 48 c7 c2 20 00 00 00  mov    rdx,0x20
+    ///    14000100f: 48 8d 0d ea 0f 00 00  lea    rcx,[rip+0xfea]        # 0x140002000
+    ///    140001016: ff 15 f4 1f 00 00     call   QWORD PTR [rip+0x1ff4]        # 0x140003010
+    ///    14000101c: 48 83 c4 40           add    rsp,0x40
+    ///    140001020: 48 c7 c0 00 00 00 00  mov    rax,0x0
+    ///    140001027: 48 89 ec              mov    rsp,rbp
+    ///    14000102a: 5d                    pop    rbp
+    ///    14000102b: c3                    ret    
+    ///   ...
+
+    final ImportSymbols imports = imports();
+    final DataSymbols datas = datas();
+
+    datas.set_rva(8192);
+    imports.set_rva(12288);
+
+    flow asm = new flow(imports, datas, 0x140000000L + 4096);
+    asm.push(rbp);
+    asm.mov(rbp, rsp);
+    asm.sub(rsp, 64);
+
+    //code+
+    asm.sub(rsp, 64);
+    asm.mov(rdx, 32);
+    asm.load_rcx_sym("%d");
+    asm.call("printf");
+    asm.add(rsp, 64);
+    //code-
+
+    asm.add(rsp, 64);
+    asm.mov(rsp, rbp);
+    asm.pop(rbp);
+    asm.commit();
+
+    System.out.println(asm);
   }
 
 }
