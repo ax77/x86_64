@@ -1,0 +1,21 @@
+
+fcall.exe:     file format pei-x86-64
+
+
+Disassembly of section .text:
+
+0000000140001000 <.text>:
+   140001000: 55                    push   rbp
+   140001001: 48 89 e5              mov    rbp,rsp
+   140001004: 48 83 ec 40           sub    rsp,0x40
+   140001008: 48 c7 c2 20 00 00 00  mov    rdx,0x20
+   14000100f: 48 8d 0d ea 0f 00 00  lea    rcx,[rip+0xfea]        # 0x140002000
+   140001016: ff 15 f4 1f 00 00     call   QWORD PTR [rip+0x1ff4]        # 0x140003010
+   14000101c: 48 83 c4 40           add    rsp,0x40
+   140001020: 48 c7 c0 00 00 00 00  mov    rax,0x0
+   140001027: 48 89 ec              mov    rsp,rbp
+   14000102a: 5d                    pop    rbp
+   14000102b: c3                    ret    
+  ...
+
+  
