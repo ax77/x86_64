@@ -1,13 +1,13 @@
 package asm5;
 
-import static asm5.Reg.R12;
-import static asm5.Reg.R13;
-import static asm5.Reg.REG_SP;
-import static asm5.Reg.RIP;
+import static asm5.Reg.rax;
 import static asm5.Reg.rbp;
-import static org.junit.Assert.*;
+import static asm5.Reg.rsp;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -229,12 +229,22 @@ public class Test5 {
       append(new instr(itype.nop, buf));
     }
 
+    public void nop(int howMany) {
+      for (int i = 0; i < howMany; i += 1) {
+        nop();
+      }
+    }
+
     public void commit() {
       applyIndex();
       applyOffset();
       resolveLabels();
       resolveJumps();
       finalized = true;
+    }
+
+    public instr getInstr(int at) {
+      return instr.get(at);
     }
 
     // jmp backward at 0x140001073:
@@ -358,7 +368,7 @@ public class Test5 {
       res.append("INDX      ");
       res.append("OFFS hex    ");
       res.append("OFFS dec  \n");
-      
+
       int maxlen = maxlen(); // bytes, each byte in a form 'ff', and we need whitespace after, so:
       maxlen *= 3; // [ff ] -> byte+byte+whitespace
 
@@ -405,12 +415,12 @@ public class Test5 {
   @Test
   public void test2() {
     flow asm = new flow(0);
-    asm.push(Reg.rbp);
-    asm.mov(Reg.rbp, Reg.rsp);
-    asm.sub(Reg.rsp, 256);
-    asm.add(Reg.rsp, 256);
-    asm.mov(Reg.rsp, Reg.rbp);
-    asm.pop(Reg.rbp);
+    asm.push(rbp);
+    asm.mov(rbp, rsp);
+    asm.sub(rsp, 256);
+    asm.add(rsp, 256);
+    asm.mov(rsp, rbp);
+    asm.pop(rbp);
     asm.nop();
     asm.nop();
     asm.ret();
@@ -419,8 +429,50 @@ public class Test5 {
     assertTrue(asm.finalized);
     assertEquals(25, asm.bytes());
 
-    System.out.println(asm);
-    System.out.println(asm.printBytes());
+    //System.out.println(asm);
+    //System.out.println(asm.printBytes());
+  }
+
+  @Test
+  public void testJumpForward() {
+    String out = "out";
+
+    flow asm = new flow(0);
+    asm.push(rax);
+
+    asm.jmp(out);
+    asm.nop(4);
+
+    out = asm.make_label(out);
+    asm.nop(4);
+    asm.commit();
+
+    // push + jmp + (4 nop) + (4 nop)
+    assertEquals(1 + 5 + 4 + 4, asm.bytes());
+
+    instr i = asm.getInstr(1);
+    assertEquals(i.typ, itype.jmp_label);
+    assertEquals(5, i.size());
+
+    // four bytes forward
+    // INDX      OFFS hex    OFFS dec  
+    // 000000000 0x000000000 000000000 50             push rax
+    // 000000001 0x000000001 000000001 e9 04 00 00 00 jmp out
+    // 000000002 0x000000006 000000006 90             nop
+    // 000000003 0x000000007 000000007 90             nop
+    // 000000004 0x000000008 000000008 90             nop
+    // 000000005 0x000000009 000000009 90             nop
+    // 000000006 0x00000000a 000000010                ;out
+    // 000000007 0x00000000a 000000010 90             nop
+    // 000000008 0x00000000b 000000011 90             nop
+    // 000000009 0x00000000c 000000012 90             nop
+    // 000000010 0x00000000d 000000013 90             nop
+
+    int expect[] = { 0xe9, 0x04, 0x00, 0x00, 0x00 };
+    assertTrue(Arrays.equals(expect, i.buf));
+
+    //System.out.println(asm);
+    //System.out.println(asm.printBytes());
   }
 
 }
