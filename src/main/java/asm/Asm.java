@@ -138,7 +138,8 @@ public class Asm {
     strm.o1(0x48);
     strm.o1(0x8D);
     strm.o1(0x0D);
-    rip_rel(new rip_relative(datas.symbol(sym)));
+    final long addr = datas.symbol(sym);
+    rip_rel(new rip_relative(addr));
   }
 
   public void lea_rdi_str_label(String sym) {
@@ -152,7 +153,8 @@ public class Asm {
   public void call(String sym) {
     strm.o1(0xFF);
     strm.o1(0x15);
-    rip_rel(new rip_relative(imports.symbol(sym)));
+    final long addr = imports.symbol(sym);
+    rip_rel(new rip_relative(addr));
   }
 
 }

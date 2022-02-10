@@ -1,6 +1,10 @@
 package asm5;
 
-import static asm5.Reg.*;
+import static asm5.Reg.R12;
+import static asm5.Reg.R13;
+import static asm5.Reg.REG_SP;
+import static asm5.Reg.RIP;
+import static asm5.Reg.rbp;
 
 import writers.Ubuf;
 
@@ -48,6 +52,24 @@ public abstract class Bin {
     return buffer.toBytes();
   }
 
+  public static int[] emit_alu_imm_reg(int opc, int imm, Reg dreg) {
+    Ubuf buffer = new Ubuf();
+    
+    if (IS_IMM8(imm)) {
+      emit_rex(buffer, 1,0,0,(dreg.r));
+      buffer.o1(0x83);
+      emit_reg(buffer, (opc),(dreg.r));
+      buffer.o1((imm));
+    } else {
+      emit_rex(buffer,1,0,0,(dreg.r));
+      buffer.o1(0x81);
+      emit_reg(buffer,(opc),(dreg.r));
+      buffer.o4((imm));
+    }
+    
+    return buffer.toBytes();
+  }
+  
   public static void emit_membase(Ubuf buffer, Reg sreg, long disp, Reg dreg) {
     if ((sreg == REG_SP) || (sreg == R12)) {
       if (disp == 0) {

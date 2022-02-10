@@ -130,6 +130,15 @@ public class PeWriter2 {
     asm.pop_rbp();
     asm.ret();
     ///
+    
+    //int xxxxx=0;
+    //for(int i : asm.toU8Bytes()) {
+    //  System.out.printf("%02x ", i);
+    //  if((xxxxx+1)%8==0) {
+    //    System.out.println();
+    //  }
+    //  xxxxx++;
+    //}
 
     // 3. section binary data
     write_section(strm, asm.toU8Bytes());
