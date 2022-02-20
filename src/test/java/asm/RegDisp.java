@@ -1,6 +1,4 @@
-package asm7._3;
-
-import asm.Reg64;
+package asm;
 
 public class RegDisp {
   public final Reg64 reg;

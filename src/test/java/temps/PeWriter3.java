@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import asm7._3.x86;
+import asm.x86;
 import constants.Alignment;
 import constants.Sizeofs;
 import pe.DosStub;

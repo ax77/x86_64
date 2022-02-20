@@ -1,5 +1,9 @@
-package asm7._3;
+package asm;
 
+import static asm.Enc.m_;
+import static asm.Enc.mi;
+import static asm.Enc.mr;
+import static asm.Enc.rm;
 import static asm.Opc.adc;
 import static asm.Opc.add;
 import static asm.Opc.and;
@@ -16,18 +20,14 @@ import static asm.Opc.or;
 import static asm.Opc.sbb;
 import static asm.Opc.sub;
 import static asm.Opc.xor;
-import static asm7._3.Enc.m_;
-import static asm7._3.Enc.mi;
-import static asm7._3.Enc.mr;
-import static asm7._3.Enc.rm;
-import static asm7._3.Opr._____;
-import static asm7._3.Opr.imm32;
-import static asm7._3.Opr.imm_8;
-import static asm7._3.Opr.memor;
-import static asm7._3.Opr.reg64;
-import static asm7._3.Opr.rm_16;
-import static asm7._3.Opr.rm_64;
-import static asm7._3.Opr.rm__8;
+import static asm.Opr._____;
+import static asm.Opr.imm32;
+import static asm.Opr.imm_8;
+import static asm.Opr.memor;
+import static asm.Opr.reg64;
+import static asm.Opr.rm_16;
+import static asm.Opr.rm_64;
+import static asm.Opr.rm__8;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,11 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import asm.Mod;
-import asm.Modrm;
-import asm.Opc;
-import asm.Reg64;
-import asm.Rex;
 import constants.Sizeofs;
 import pe.datas.DataSymbols;
 import pe.imports.ISymbol;
@@ -385,14 +380,6 @@ public class x86 {
     }
   }
 
-  private void emit_imm(Ubuf buffer, int imm) {
-    if (isInt8(imm)) {
-      buffer.o1(imm);
-    } else {
-      buffer.o4(imm);
-    }
-  }
-
   private void emit_modrm_slash_r(Ubuf buffer, String modrm, int mod, Enc enc, Reg64 dst, Reg64 src) {
     if (modrm.equals("/r")) {
       if (enc == rm) {
@@ -462,8 +449,12 @@ public class x86 {
   private Ubuf alu(Opc opc, Reg64 dst, int imm) {
     Ubuf buffer = new Ubuf();
 
-    Opr lhs = imm32; // isInt8(imm) ? imm_8 : imm32;
-    x86Comb c = getComb(rm_64, lhs, opc);
+    Opr rhs = isInt8(imm) ? imm_8 : imm32;
+    x86Comb c = getComb(rm_64, rhs, opc);
+    if(c == null) {
+      // mov uses i32
+      c = getComb(rm_64, imm32, opc);
+    }
 
     if (c == null) {
       throw new RuntimeException("cannot find: " + dst + ", imm32");
@@ -480,7 +471,12 @@ public class x86 {
     Modrm.emit_modrm_rm(buffer, Mod.b11, reg, dst.r);
 
     // 4) imm
-    buffer.o4(imm); // TODO
+    if(c.rhs == imm_8) {
+      assert isInt8(imm);
+      buffer.o1(imm); 
+    } else {
+      buffer.o4(imm); 
+    }
 
     return buffer;
   }

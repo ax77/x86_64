@@ -1,4 +1,4 @@
-package asm7._3;
+package asm;
 
 public enum Enc {
     mi, mr, rm, m_

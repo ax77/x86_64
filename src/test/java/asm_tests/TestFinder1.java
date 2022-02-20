@@ -1,7 +1,8 @@
-package asm7._3;
+package asm_tests;
 
 import org.junit.Test;
 
+import asm.x86;
 import pe.datas.DataSymbols;
 import pe.imports.ImageImportByName;
 import pe.imports.ImportDll;
@@ -9,7 +10,7 @@ import pe.imports.ImportSymbols;
 import static asm.Reg64.*;
 import static asm.Opc.*;
 
-public class TestFinder {
+public class TestFinder1 {
 
   private String b(int value, int radix) {
 

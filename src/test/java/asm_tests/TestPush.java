@@ -1,4 +1,4 @@
-package asm7;
+package asm_tests;
 
 public class TestPush {
 
