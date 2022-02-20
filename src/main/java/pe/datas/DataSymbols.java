@@ -3,10 +3,11 @@ package pe.datas;
 import java.util.HashMap;
 import java.util.Map;
 
+import pe.imports.ISymbol;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class DataSymbols {
+public class DataSymbols implements ISymbol {
   public long current_offset;
   public long virtual_addr;
   private Map<String, Long> symbols;

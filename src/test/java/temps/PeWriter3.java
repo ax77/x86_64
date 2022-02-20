@@ -1,8 +1,12 @@
 package temps;
 
-import static asm5.Reg.rbp;
-import static asm5.Reg.rdx;
-import static asm5.Reg.rsp;
+import static asm.Opc.add;
+import static asm.Opc.mov;
+import static asm.Opc.sub;
+import static asm.Reg64.rbp;
+import static asm.Reg64.rcx;
+import static asm.Reg64.rdx;
+import static asm.Reg64.rsp;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
 import static pe.sections.SectionsIndexesLight.DATA;
@@ -15,6 +19,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import asm7._3.x86;
 import constants.Alignment;
 import constants.Sizeofs;
 import pe.DosStub;
@@ -133,23 +138,19 @@ public class PeWriter3 {
 //    asm.ret();
 //    ///
     
-    asm5.flow asm = new asm5.flow(imports, datas, 4096);
+    x86 asm = new x86(4096, imports, datas);
     asm.push(rbp);
-    asm.mov(rbp, rsp);
-    //asm.sub(rsp, 64);
+    asm.rr(mov, rbp, rsp);
 
-    //code+
-    asm.sub(rsp, 64);
-    asm.mov(rdx, 32);
-    asm.load_rcx_sym("%d");
+    asm.ri(sub, rsp, 64);
+    asm.ri(mov, rdx, 320);
+    asm.load(rcx, "%d");
     asm.call("printf");
-    asm.add(rsp, 64);
-    //code-
+    asm.ri(add, rsp, 64);
 
-    //asm.add(rsp, 64);
-    asm.mov(rsp, rbp);
+    asm.rr(mov, rsp, rbp);
     asm.pop(rbp);
-    asm.ret();
+
     asm.commit();
 
     // 3. section binary data

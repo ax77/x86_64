@@ -57,7 +57,6 @@ public class TestFinder {
   public void test1() {
     /// fcall.exe:     file format pei-x86-64
     /// 
-    /// 
     /// Disassembly of section .text:
     /// 
     /// 0000000140001000 <.text>:

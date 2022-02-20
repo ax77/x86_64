@@ -42,13 +42,9 @@ import asm.Modrm;
 import asm.Opc;
 import asm.Reg64;
 import asm.Rex;
-import asm5.Reg;
-import asm5.imm_size;
-import asm5.instr;
-import asm5.itype;
-import asm5.operand;
 import constants.Sizeofs;
 import pe.datas.DataSymbols;
+import pe.imports.ISymbol;
 import pe.imports.ImportSymbols;
 import writers.Ubuf;
 
@@ -118,6 +114,19 @@ public class x86 {
       }
     }
     return n;
+  }
+
+  public int[] toBytes() {
+    int buf[] = new int[bytesCount()];
+    int off = 0;
+    for (AsmLine line : lines) {
+      if (line.isExucutable()) {
+        for (int b : line.bytes.toBytes()) {
+          buf[off++] = b;
+        }
+      }
+    }
+    return buf;
   }
 
   private void line(Ubuf buffer, String repr) {
@@ -471,7 +480,7 @@ public class x86 {
     Modrm.emit_modrm_rm(buffer, Mod.b11, reg, dst.r);
 
     // 4) imm
-    emit_imm(buffer, imm);
+    buffer.o4(imm); // TODO
 
     return buffer;
   }
@@ -516,7 +525,18 @@ public class x86 {
     return buffer;
   }
 
-  ///////
+  /// Imports, datas
+
+  private long rip_rel(Ubuf buffer, ISymbol container, String symName) {
+
+    long abs = container.symbol(symName);
+
+    // the current size of all instructions + size of this very line
+    long rip = codebase + (buffer.bytes() + bytesCount()) + Sizeofs.SIZEOF_DWORD;
+
+    long rel_addr = abs - rip;
+    return rel_addr;
+  }
 
   public void call(String sym) {
     Ubuf buffer = new Ubuf();
@@ -524,9 +544,7 @@ public class x86 {
     buffer.o1(0x15);
 
     // rip-relative
-    long abs = imports.symbol(sym);
-    long rip = codebase + (buffer.bytes() + bytesCount()) + Sizeofs.SIZEOF_DWORD;
-    long rel_addr = abs - rip;
+    long rel_addr = rip_rel(buffer, imports, sym);
     buffer.oi4(rel_addr);
 
     line(buffer, "call [rip+" + rel_addr + "]");
@@ -545,9 +563,7 @@ public class x86 {
     Modrm.emit_modrm_rm(buffer, Mod.b00, reg.r, 0b101);
 
     // rip-relative
-    long abs = datas.symbol(dataSym);
-    long rip = codebase + (buffer.bytes() + bytesCount()) + Sizeofs.SIZEOF_DWORD; // the current size of all instructions + size of this very line
-    long rel_addr = abs - rip;
+    long rel_addr = rip_rel(buffer, datas, dataSym);
     buffer.oi4(rel_addr);
 
     line(buffer, "lea " + reg + ", [rip+" + rel_addr + "]");

@@ -7,7 +7,7 @@ import constants.Sizeofs;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class ImportSymbols {
+public class ImportSymbols implements ISymbol {
   private List<ImportDll> import_dlls;
   private List<ImageThunkData64> thunks;
   private List<ImageImportDescriptor> descs;
