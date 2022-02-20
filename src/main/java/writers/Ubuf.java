@@ -220,6 +220,23 @@ public class Ubuf implements IDataWriter {
     return result;
   }
 
+  public String printBytes(boolean ox) {
+    StringBuilder sb = new StringBuilder();
+    int bytes[] = toBytes();
+    for (int i = 0; i < bytes.length; i += 1) {
+      int b = bytes[i];
+      if (ox) {
+        sb.append(String.format("0x%02x,", b));
+      } else {
+        sb.append(String.format("%02x ", b));
+      }
+      if ((i + 1) % 8 == 0) {
+        sb.append("\n");
+      }
+    }
+    return sb.toString().trim();
+  }
+
   /// public byte[] toBytes() {
   ///   int x[] = toU8Bytes();
   ///   byte b[] = new byte[x.length];
