@@ -29,4 +29,6 @@ public enum Opc {
   shr,
   sub,
   xor,
+  jmp,
+  call,
 }

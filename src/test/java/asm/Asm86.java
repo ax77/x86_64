@@ -37,10 +37,11 @@ public class Asm86 {
   ///
   /// * III) leave, ret, nop, cwd, cdq, cqo
   /// opc
-  /// 
-  /// * IV) setCC -> seta, setae, setb, setbe, setc, sete, setg, setge, setl, setle, setna, 
-  ///              setnae, setnb, setnbe, setnc, setne, setng, setnge, setnl, setnle, setno, 
-  ///              setnp, setns, setnz, seto, setp, setpe, setpo, sets, setz,
+  ///
+  /// * IV) setCC -> seta, setae, setb, setbe, setc, sete, setg, setge, setl,
+  /// setle, setna,
+  /// setnae, setnb, setnbe, setnc, setne, setng, setnge, setnl, setnle, setno,
+  /// setnp, setns, setnz, seto, setp, setpe, setpo, sets, setz,
   /// opc,reg8
   ///
   /// * V) movsx, movzx
@@ -189,7 +190,14 @@ public class Asm86 {
 
         // rewrite the addreess
         Ubuf strm = new Ubuf();
-        strm.o1(0xE9);
+        if (line.opc == Opc.jmp) {
+          strm.o1(0xE9);
+        } else if (line.opc == Opc.call) {
+          strm.o1(0xE8);
+        } else {
+          throw new RuntimeException("unimplemented jmp opcode: " + line.opc);
+        }
+
         strm.oi4(offsetToTheTarget);
         line.bytes = strm;
       }
@@ -266,7 +274,16 @@ public class Asm86 {
     buffer.o1(0xE9);
     buffer.o4(0);
 
-    lines.add(new AsmLine(buffer, label, "jmp " + label));
+    lines.add(new AsmLine(Opc.jmp, buffer, label, "jmp " + label));
+  }
+
+  public void call_label(String label) {
+
+    Ubuf buffer = new Ubuf();
+    buffer.o1(0xE8);
+    buffer.o4(0);
+
+    lines.add(new AsmLine(Opc.call, buffer, label, "call " + label));
   }
 
   /// Imports, datas
@@ -450,7 +467,7 @@ public class Asm86 {
   // 2) jmp wherever
   // 3) plain code
   static enum AsmLineKind {
-      code, label, jmp_label,
+    code, label_only, jmp_label,
   }
 
   static class AsmLine {
@@ -460,9 +477,10 @@ public class Asm86 {
     public long offset;
     public Ubuf bytes;
     public String label;
+    public Opc opc;
 
     public AsmLine(String label) {
-      this.kind = AsmLineKind.label;
+      this.kind = AsmLineKind.label_only;
       this.label = label;
       this.repr = label + ":";
     }
@@ -473,11 +491,12 @@ public class Asm86 {
       this.repr = repr;
     }
 
-    public AsmLine(Ubuf bytes, String label, String repr) {
+    public AsmLine(Opc opc, Ubuf bytes, String label, String repr) {
       this.kind = AsmLineKind.jmp_label;
       this.bytes = bytes;
       this.label = label;
       this.repr = repr;
+      this.opc = opc;
     }
 
     public boolean isJmpLabel() {
@@ -489,7 +508,7 @@ public class Asm86 {
     }
 
     public boolean isLabel() {
-      return kind == AsmLineKind.label;
+      return kind == AsmLineKind.label_only;
     }
 
     @Override

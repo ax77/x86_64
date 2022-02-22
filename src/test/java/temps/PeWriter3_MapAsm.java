@@ -126,6 +126,9 @@ public class PeWriter3_MapAsm {
     }
 
     Asm86 asm = new Asm86(4096, imports, datas);
+    String proc2 = "proc2";
+    
+    //main:
     asm.gen_op1(push, rbp);
     asm.reg_reg(mov, rbp, rsp);
     asm.reg_i32(sub, rsp, 64);
@@ -138,8 +141,22 @@ public class PeWriter3_MapAsm {
 
     asm.reg_i32(add, rsp, 64);
     asm.gen_op1(pop, rbp);
+    asm.reg_reg(xor, rax, rax);
+    asm.call_label(proc2);
     asm.gen_op0(ret);
+    
+    //proc2:
+    proc2 = asm.make_label(proc2);
+    asm.gen_op1(push, rbp);
+    asm.reg_reg(mov, rbp, rsp);
+    asm.reg_i32(sub, rsp, 64);
+    asm.reg_i32(mov, rax, 34);
+    asm.reg_i32(add, rsp, 64);
+    asm.gen_op1(pop, rbp);
+    asm.gen_op0(ret);
+    
     asm.commit();
+    System.out.println(asm.printBytesInstr());
 
     // 3. section binary data
     write_section(strm, asm.toBytes());
