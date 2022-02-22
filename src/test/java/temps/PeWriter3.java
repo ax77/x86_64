@@ -2,10 +2,13 @@ package temps;
 
 import static asm.Opc.add;
 import static asm.Opc.mov;
-import static asm.Opc.sub;
+import static asm.Opc.pop;
+import static asm.Opc.push;
+import static asm.Opc.ret;
+import static asm.Opc.*;
+import static asm.Opc.xor;
+import static asm.Reg64.*;
 import static asm.Reg64.rbp;
-import static asm.Reg64.rcx;
-import static asm.Reg64.rdx;
 import static asm.Reg64.rsp;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
@@ -19,7 +22,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import asm.x86;
+import asm.Asm86;
 import constants.Alignment;
 import constants.Sizeofs;
 import pe.DosStub;
@@ -122,35 +125,20 @@ public class PeWriter3 {
       s.write(strm);
     }
 
-//    Asm asm = new Asm(imports, datas, sec_headers.get(TEXT).VirtualAddress);
-//    asm.push_rbp();
-//    asm.mov_rbp_rsp();
-//
-//    asm.sub_rsp_u8(64);
-//    asm.mov_rdx_i32(32);
-//    asm.lea_rcx_str_label(fmt);
-//    asm.call("printf");
-//    asm.add_rsp_u8(64);
-//
-//    asm.mov_rax_i32(0);
-//    asm.mov_rsp_rbp();
-//    asm.pop_rbp();
-//    asm.ret();
-//    ///
-    
-    x86 asm = new x86(4096, imports, datas);
-    asm.push(rbp);
-    asm.rr(mov, rbp, rsp);
+    Asm86 asm = new Asm86(4096, imports, datas);
+    asm.gen_op1(push, rbp);
+    asm.reg_reg(mov, rbp, rsp);
+    asm.reg_i32(sub, rsp, 64);
 
-    asm.ri(sub, rsp, 64);
-    asm.ri(mov, rdx, 320);
+    // code+
+    asm.reg_i32(mov, rdx, 70);
     asm.load(rcx, "%d");
     asm.call("printf");
-    asm.ri(add, rsp, 64);
+    // code-
 
-    asm.rr(mov, rsp, rbp);
-    asm.pop(rbp);
-
+    asm.reg_i32(add, rsp, 64);
+    asm.gen_op1(pop, rbp);
+    asm.gen_op0(ret);
     asm.commit();
 
     // 3. section binary data
@@ -160,14 +148,10 @@ public class PeWriter3 {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/asm5.exe";
+    String filename = dir + "/asm32.exe";
     strm.fout(filename);
     chmodX(filename);
 
-    //    imports.symbol("ExitProcess");
-    //    imports.symbol("printf");
-    //    imports.symbol("scanf");
-    //    imports.symbol("strlen");
   }
 
   private void chmodX(String filename) {

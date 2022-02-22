@@ -1,24 +1,20 @@
 package asm;
 
 public class RegDisp {
-  public final Reg64 reg;
-  public final int disp;
+  private final Reg64 reg;
+  private final int disp32;
 
-  public RegDisp(Reg64 reg, int disp) {
+  public RegDisp(Reg64 reg, int disp32) {
     this.reg = reg;
-    this.disp = disp;
+    this.disp32 = disp32;
   }
 
-  public boolean isDisp8() {
-    return disp >= -128 && disp <= 127;
+  public Reg64 getReg() {
+    return reg;
   }
 
-  public boolean isDisp32() {
-    return !isDisp8();
+  public int getDisp32() {
+    return disp32;
   }
 
-  @Override
-  public String toString() {
-    return "[" + reg.toString() + "+" + disp + "]";
-  }
 }

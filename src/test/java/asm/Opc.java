@@ -1,5 +1,32 @@
 package asm;
 
+//@formatter:off
 public enum Opc {
-    add, adc, sub, or, dec, movzx, cmp, lea, movsx, neg, sbb, not, mov, and, xor, inc, push, pop, ret,
+  adc,
+  add,
+  and,
+  cdq,
+  cmp,
+  cqo,
+  cwd,
+  dec,
+  inc,
+  lea,
+  mov,
+  movsx,
+  movzx,
+  neg,
+  not,
+  or,
+  pop,
+  push,
+  ret,
+  sar,
+  sbb,
+  sete,
+  setne,
+  shl,
+  shr,
+  sub,
+  xor,
 }

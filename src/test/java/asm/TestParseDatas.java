@@ -1,17 +1,22 @@
-package asm_tests;
+package asm;
+
+import static asm.Opc.*;
+import static asm.Reg64.rcx;
+import static asm.Reg64.*;
+
+import java.io.IOException;
 
 import org.junit.Test;
 
-import asm.x86;
-import asm.x86Comb;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+
 import pe.datas.DataSymbols;
 import pe.imports.ImageImportByName;
 import pe.imports.ImportDll;
 import pe.imports.ImportSymbols;
-import static asm.Reg64.*;
-import static asm.Opc.*;
 
-public class TestFinder2 {
+public class TestParseDatas {
 
   private String b(int value, int radix) {
 
@@ -56,52 +61,25 @@ public class TestFinder2 {
   }
 
   @Test
-  public void test1() {
+  public void test() throws StreamReadException, DatabindException, IOException {
+    String top = "top", out = "out";
 
-    final ImportSymbols imports = imports();
-    final DataSymbols datas = datas();
+    Asm86 asm = new Asm86(4096, imports(), datas());
+    asm.gen_op1(push, rbp);
+    asm.reg_reg(mov, rbp, rsp);
+    asm.reg_i32(sub, rsp, 32);
 
-    datas.set_rva(8192);
-    imports.set_rva(12288);
+    // code+
+    asm.reg_reg(xor, rax, rax);
+    // code-
 
-    x86 asm = new x86(4096, imports, datas);
-    asm.ri(add, rcx, 100);
-    asm.ri(add, rcx, 200);
-    asm.ri(mov, rcx, 100);
-    asm.ri(mov, rcx, 200);
-    
+    asm.reg_i32(add, rsp, 32);
+    asm.gen_op1(pop, rbp);
+    asm.gen_op0(ret);
+    asm.commit();
+
     System.out.println(asm.printBytesInstr());
     System.out.println(asm.printBytes());
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
