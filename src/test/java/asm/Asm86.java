@@ -110,6 +110,20 @@ public class Asm86 {
     return sb.toString();
   }
 
+  public String printBytesNewArray() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("int tmp_buffer[] = { ");
+    for (AsmLine b : lines) {
+      if (b.isLabel()) {
+        continue; // label stub
+      }
+      sb.append(b.bytes.printBytes(true));
+      sb.append("\n");
+    }
+    sb.append(" };");
+    return sb.toString();
+  }
+
   public String printInstr() {
     StringBuilder sb = new StringBuilder();
     for (AsmLine s : lines) {
@@ -282,20 +296,6 @@ public class Asm86 {
 
   public void load(Reg64 reg, String dataSym) {
 
-    //    Ubuf buffer = new Ubuf();
-    //    Rex.emit_prefix_rm(buffer, 8, 0, reg.r);
-    //
-    //    buffer.o1(0x8D); // lea
-    //
-    //    // Modrm form, 32-bit displacement-only mode.
-    //    // 00 dst 101
-    //    // MD REG R/M
-    //    Modrm.emit_modrm_rm(buffer, Mod.b00, reg.r, 0b101);
-    //
-
-    //
-    //    line(buffer, "lea " + reg + ", [rip+" + rel_addr + "]");
-
     final String key = "lea " + reg.toString() + ",[rip+@i32]";
     Ubuf buffer = buildBufferHdr(key);
 
@@ -304,7 +304,6 @@ public class Asm86 {
     buffer.oi4(rel_addr);
 
     line(buffer, String.format("lea %s,[rip+%d]", reg.toString(), rel_addr));
-
   }
 
   // builders

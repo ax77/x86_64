@@ -2,10 +2,6 @@ package writers;
 
 public abstract class SizeUtil {
 
-  //  int align(int addr, int alignment) {
-  //    return (addr + (alignment - 1)) & ~(alignment - 1);
-  //  }
-
   public static int align(int value, int alignment) {
     if (alignment <= 0) {
       throw new RuntimeException("negative or zero alignment.");

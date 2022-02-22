@@ -43,7 +43,7 @@ import writers.IDataWriter;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class PeWriter3 {
+public class PeWriter3_MapAsm {
 
   private ImportSymbols construct_iat() {
     ImportSymbols imports = new ImportSymbols();
@@ -148,7 +148,7 @@ public class PeWriter3 {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/asm32.exe";
+    String filename = dir + "/pewriter3.exe";
     strm.fout(filename);
     chmodX(filename);
 

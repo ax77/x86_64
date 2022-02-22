@@ -1,16 +1,19 @@
-package asm;
+package tests;
 
 import static asm.Opc.*;
 import static asm.Reg64.rcx;
+import static org.junit.Assert.*;
 import static asm.Reg64.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
+import asm.Asm86;
 import pe.datas.DataSymbols;
 import pe.imports.ImageImportByName;
 import pe.imports.ImportDll;
@@ -62,7 +65,6 @@ public class TestParseDatas {
 
   @Test
   public void test() throws StreamReadException, DatabindException, IOException {
-    String top = "top", out = "out";
 
     Asm86 asm = new Asm86(4096, imports(), datas());
     asm.gen_op1(push, rbp);
@@ -78,8 +80,10 @@ public class TestParseDatas {
     asm.gen_op0(ret);
     asm.commit();
 
-    System.out.println(asm.printBytesInstr());
-    System.out.println(asm.printBytes());
+    int tmp_buffer[] = { 0x55, 0x48, 0x89, 0xe5, 0x48, 0x81, 0xec, 0x20, 0x00, 0x00, 0x00, 0x48, 0x31, 0xc0, 0x48, 0x81,
+        0xc4, 0x20, 0x00, 0x00, 0x00, 0x5d, 0xc3, };
+
+    assertTrue(Arrays.equals(tmp_buffer, asm.toBytes()));
   }
 
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class Asm86Gen {
@@ -257,9 +258,10 @@ public class Asm86Gen {
     return System.getProperty("user.dir");
   }
 
+  @Ignore
   @Test
   public void test() throws IOException {
-    //gen();
+    gen();
     merge();
   }
 
