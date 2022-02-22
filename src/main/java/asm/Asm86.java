@@ -142,7 +142,7 @@ public class Asm86 {
     lines.add(new AsmLine(buffer, repr));
   }
 
-  public void commit(final long virtualAddress, ImportSymbols imports, DataSymbols datas) {
+  public void set_rva(final long virtualAddress, ImportSymbols imports, DataSymbols datas) {
     // 1) apply offsets
     long offset = virtualAddress;
     for (AsmLine line : lines) {

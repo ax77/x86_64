@@ -1,4 +1,4 @@
-package asm;
+package tests;
 
 import static org.junit.Assert.assertTrue;
 
@@ -117,9 +117,11 @@ public class Asm86Gen {
   }
 
   private String[] setcOpcodes() {
-    //    return new String[] { "seta", "setae", "setb", "setbe", "setc", "sete", "setg", "setge", "setl", "setle", "setna",
-    //        "setnae", "setnb", "setnbe", "setnc", "setne", "setng", "setnge", "setnl", "setnle", "setno", "setnp", "setns",
-    //        "setnz", "seto", "setp", "setpe", "setpo", "sets", "setz", };
+    // return new String[] { "seta", "setae", "setb", "setbe", "setc", "sete",
+    // "setg", "setge", "setl", "setle", "setna",
+    // "setnae", "setnb", "setnbe", "setnc", "setne", "setng", "setnge", "setnl",
+    // "setnle", "setno", "setnp", "setns",
+    // "setnz", "seto", "setp", "setpe", "setpo", "sets", "setz", };
 
     return new String[] { "sete", "setne", };
   }
@@ -142,8 +144,10 @@ public class Asm86Gen {
     return new String[] { "movsx", "movzx" };
   }
 
-  /// The shift arithmetic left (SAL) and shift logical left (SHL) instructions perform the same operation; 
-  /// they shift the bits in the destination operand to the left (toward more significant bit locations).
+  /// The shift arithmetic left (SAL) and shift logical left (SHL) instructions
+  /// perform the same operation;
+  /// they shift the bits in the destination operand to the left (toward more
+  /// significant bit locations).
   private String[] shiftOpcodes() {
     return new String[] { "shl", "shr", "sar", };
   }

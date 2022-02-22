@@ -1,15 +1,5 @@
-package temps;
+package pe;
 
-import static asm.Opc.add;
-import static asm.Opc.mov;
-import static asm.Opc.pop;
-import static asm.Opc.push;
-import static asm.Opc.ret;
-import static asm.Opc.*;
-import static asm.Opc.xor;
-import static asm.Reg64.*;
-import static asm.Reg64.rbp;
-import static asm.Reg64.rsp;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
 import static pe.sections.SectionsIndexesLight.DATA;
@@ -20,21 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Test;
-
 import asm.Asm86;
 import constants.Alignment;
 import constants.Sizeofs;
-import pe.DosStub;
-import pe.ImageDosHeader;
-import pe.ImageFileHeader;
-import pe.ImageNtHeader64;
-import pe.ImageOptionalHeader64;
-import pe.ImageSectionHeader;
-import pe.PE64;
 import pe.datas.DataSymbols;
-import pe.imports.ImageImportByName;
-import pe.imports.ImportDll;
 import pe.imports.ImportSymbols;
 import pe.sections.SectionHeadersBuilder;
 import pe.sections.SectionSize;
@@ -43,48 +22,35 @@ import writers.IDataWriter;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class PeWriter3_MapAsm {
+public class PeMainWriter {
 
-  private ImportSymbols construct_iat() {
-    ImportSymbols imports = new ImportSymbols();
+  private final DataSymbols datas;
+  private final ImportSymbols imports;
+  private final Asm86 code;
 
-    final ImportDll kernelDLL = new ImportDll("KERNEL32.dll");
-    kernelDLL.add_procedure(new ImageImportByName("ExitProcess", 0x120));
-
-    final ImportDll msvcrtDLL = new ImportDll("msvcrt.dll");
-    msvcrtDLL.add_procedure(new ImageImportByName("printf", 0x48b));
-    msvcrtDLL.add_procedure(new ImageImportByName("scanf", 0x49b));
-    msvcrtDLL.add_procedure(new ImageImportByName("strlen", 0));
-
-    imports.add_dll(kernelDLL);
-    imports.add_dll(msvcrtDLL);
-
-    imports.prepare();
-    return imports;
+  public PeMainWriter(DataSymbols datas, ImportSymbols imports, Asm86 code) {
+    this.datas = datas;
+    this.imports = imports;
+    this.code = code;
   }
 
-  @Test
-  public void write() throws IOException {
-
-    String fmt = "%d";
-
-    // stub data
-    DataSymbols datas = new DataSymbols();
-    datas.add(fmt);
-
-    // stub import
-    ImportSymbols imports = construct_iat();
+  public void write(String fname) throws IOException {
 
     SectionHeadersBuilder sBuilder = new SectionHeadersBuilder();
-    sBuilder.add(".text", new SectionSize(512/*TODO, it's a stub :)*/), SectionsIndexesLight.flags(TEXT));
+    sBuilder.add(".text", new SectionSize(code.bytesCount()), SectionsIndexesLight.flags(TEXT));
     sBuilder.add(".data", new SectionSize(datas.virtual_size(), datas.raw_size()), SectionsIndexesLight.flags(DATA));
     sBuilder.add(".idata", new SectionSize(imports.total_size()), SectionsIndexesLight.flags(IDATA));
 
     List<ImageSectionHeader> sec_headers = sBuilder.build();
 
     /// set all RVAs
+
     datas.set_rva(sec_headers.get(DATA).VirtualAddress);
     imports.set_rva(sec_headers.get(IDATA).VirtualAddress);
+    /// XXX:commit exactly here! after all data and imports RVAs are ready.
+    code.set_rva(sec_headers.get(TEXT).VirtualAddress, imports, datas);
+
+    System.out.println(code.printBytesInstr());
 
     /// Sections, sizes
     final int num_of_sections = sec_headers.size();
@@ -125,50 +91,16 @@ public class PeWriter3_MapAsm {
       s.write(strm);
     }
 
-    Asm86 asm = new Asm86();
-    String proc2 = "proc2";
-    
-    //main:
-    asm.gen_op1(push, rbp);
-    asm.reg_reg(mov, rbp, rsp);
-    asm.reg_i32(sub, rsp, 64);
-
-    // code+
-    asm.reg_i32(mov, rdx, 70);
-    asm.load(rcx, "%d");
-    asm.call("printf");
-    // code-
-
-    asm.reg_i32(add, rsp, 64);
-    asm.gen_op1(pop, rbp);
-    asm.reg_reg(xor, rax, rax);
-    asm.call_label(proc2);
-    asm.gen_op0(ret);
-    
-    //proc2:
-    proc2 = asm.make_label(proc2);
-    asm.gen_op1(push, rbp);
-    asm.reg_reg(mov, rbp, rsp);
-    asm.reg_i32(sub, rsp, 64);
-    asm.reg_i32(mov, rax, 34);
-    asm.reg_i32(add, rsp, 64);
-    asm.gen_op1(pop, rbp);
-    asm.gen_op0(ret);
-    
-    asm.set_rva(4096, imports, datas);
-    System.out.println(asm.printBytesInstr());
-
     // 3. section binary data
-    write_section(strm, asm.toBytes());
+    write_section(strm, code.toBytes());
     write_section(strm, datas.build());
     write_section(strm, imports.build());
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pewriter3.exe";
+    String filename = dir + "/" + fname;
     strm.fout(filename);
     chmodX(filename);
-
   }
 
   private void chmodX(String filename) {
