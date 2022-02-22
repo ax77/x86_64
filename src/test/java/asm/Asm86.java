@@ -59,20 +59,11 @@ public class Asm86 {
   private Map<String, Long> labelsOffset;
   private List<AsmLine> lines;
 
-  private final long codebase;
-  private final ImportSymbols imports;
-  private final DataSymbols datas;
-
-  public Asm86(long codebase, ImportSymbols imports, DataSymbols datas)
-      throws StreamReadException, DatabindException, IOException {
+  public Asm86() throws StreamReadException, DatabindException, IOException {
     this.mapping = buildMapping();
     this.labels = new HashSet<>();
     this.labelsOffset = new HashMap<>();
     this.lines = new ArrayList<>();
-
-    this.codebase = codebase;
-    this.imports = imports;
-    this.datas = datas;
   }
 
   // main api
@@ -151,9 +142,9 @@ public class Asm86 {
     lines.add(new AsmLine(buffer, repr));
   }
 
-  public void commit() {
+  public void commit(final long virtualAddress, ImportSymbols imports, DataSymbols datas) {
     // 1) apply offsets
-    long offset = codebase;
+    long offset = virtualAddress;
     for (AsmLine line : lines) {
       line.offset = offset;
       if (!line.isLabel()) {
@@ -168,13 +159,18 @@ public class Asm86 {
       }
     }
 
+    long bytesnow = 0;
+
     // 3) resolve jumps
     for (int i = 0; i < lines.size(); i++) {
 
       final AsmLine line = lines.get(i);
+
       if (line.isLabel()) {
         continue;
       }
+
+      bytesnow += line.bytes.toBytes().length;
 
       final int jmpStub[] = new int[] { 0xE9, 0x00, 0x00, 0x00, 0x00 };
 
@@ -200,6 +196,46 @@ public class Asm86 {
 
         strm.oi4(offsetToTheTarget);
         line.bytes = strm;
+      }
+
+      else {
+
+        // TODO: clean this.
+        // call dll function
+        // load symbol
+
+        Ubuf lineBufExact = line.bytes;
+        int lineBuf[] = lineBufExact.toBytes();
+
+        if (lineBuf[0] == 0xff && lineBuf[1] == 0x15) {
+          final String symname = line.repr;
+          long abs = imports.symbol(symname);
+          long rip = virtualAddress + bytesnow;
+          long rel_addr = abs - rip;
+
+          Ubuf realbuf = new Ubuf();
+          realbuf.o1(0xff);
+          realbuf.o1(0x15);
+          realbuf.oi4(rel_addr);
+          line.bytes = realbuf;
+          line.repr = "call " + String.format("[rip+%d] # %s", rel_addr, symname);
+
+        }
+
+        else if (lineBuf[0] == 0x48 && lineBuf[1] == 0x8d) {
+          final String symname = line.repr;
+          long abs = datas.symbol(symname);
+          long rip = virtualAddress + bytesnow;
+          long rel_addr = abs - rip;
+
+          Ubuf realbuf = new Ubuf();
+          realbuf.o1(lineBuf[0]);
+          realbuf.o1(lineBuf[1]);
+          realbuf.o1(lineBuf[2]);
+          realbuf.oi4(rel_addr);
+          line.bytes = realbuf;
+          line.repr = "lea rcx" + String.format("[rip+%d] # %s", rel_addr, symname); // TODO: normal description :)
+        }
       }
 
     }
@@ -288,39 +324,19 @@ public class Asm86 {
 
   /// Imports, datas
 
-  private long rip_rel(Ubuf buffer, ISymbol container, String symName) {
-
-    long abs = container.symbol(symName);
-
-    // the current size of all instructions + size of this very line
-    long rip = codebase + (buffer.bytes() + bytesCount()) + Sizeofs.SIZEOF_DWORD;
-
-    long rel_addr = abs - rip;
-    return rel_addr;
-  }
-
   public void call(String sym) {
     Ubuf buffer = new Ubuf();
     buffer.o1(0xFF);
     buffer.o1(0x15);
-
-    // rip-relative
-    long rel_addr = rip_rel(buffer, imports, sym);
-    buffer.oi4(rel_addr);
-
-    line(buffer, "call [rip+" + rel_addr + "]");
+    buffer.o4(0);
+    line(buffer, sym);
   }
 
   public void load(Reg64 reg, String dataSym) {
-
     final String key = "lea " + reg.toString() + ",[rip+@i32]";
     Ubuf buffer = buildBufferHdr(key);
-
-    // rip-relative
-    long rel_addr = rip_rel(buffer, datas, dataSym);
-    buffer.oi4(rel_addr);
-
-    line(buffer, String.format("lea %s,[rip+%d]", reg.toString(), rel_addr));
+    buffer.o4(0);
+    line(buffer, dataSym);
   }
 
   // builders
@@ -472,7 +488,7 @@ public class Asm86 {
 
   static class AsmLine {
     public final AsmLineKind kind;
-    public final String repr; // toString()
+    public String repr; // toString()
 
     public long offset;
     public Ubuf bytes;

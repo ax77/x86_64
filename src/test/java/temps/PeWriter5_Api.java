@@ -5,10 +5,12 @@ import static asm.Opc.mov;
 import static asm.Opc.pop;
 import static asm.Opc.push;
 import static asm.Opc.ret;
-import static asm.Opc.*;
+import static asm.Opc.sub;
 import static asm.Opc.xor;
-import static asm.Reg64.*;
+import static asm.Reg64.rax;
 import static asm.Reg64.rbp;
+import static asm.Reg64.rcx;
+import static asm.Reg64.rdx;
 import static asm.Reg64.rsp;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
 import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
@@ -21,6 +23,9 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
+
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 
 import asm.Asm86;
 import constants.Alignment;
@@ -43,7 +48,7 @@ import writers.IDataWriter;
 import writers.SizeUtil;
 import writers.Ubuf;
 
-public class PeWriter3_MapAsm {
+public class PeWriter5_Api {
 
   private ImportSymbols construct_iat() {
     ImportSymbols imports = new ImportSymbols();
@@ -63,6 +68,46 @@ public class PeWriter3_MapAsm {
     return imports;
   }
 
+  private Asm86 construct_code() throws StreamReadException, DatabindException, IOException {
+
+    // plain asm
+    // Asm asm = new Asm(imports, datas, sec_headers.get(TEXT).VirtualAddress);
+    // asm.push_rbp();
+    // asm.mov_rbp_rsp();
+    //
+    // asm.sub_rsp_u8(64);
+    // asm.mov_rdx_i32(32);
+    // asm.lea_rcx_str_label(fmt);
+    // asm.call("printf");
+    // asm.add_rsp_u8(64);
+    //
+    // asm.mov_rax_i32(0);
+    // asm.mov_rsp_rbp();
+    // asm.pop_rbp();
+    // asm.ret();
+
+    Asm86 asm = new Asm86();
+
+    // main:
+    asm.gen_op1(push, rbp);
+    asm.reg_reg(mov, rbp, rsp);
+    asm.reg_i32(sub, rsp, 64);
+
+    // code+
+    asm.reg_i32(mov, rdx, 70);
+    asm.load(rcx, "%d");
+    asm.call("printf");
+    // code-
+
+    asm.reg_i32(add, rsp, 64);
+    asm.reg_i32(mov, rax, 0);
+    asm.gen_op1(pop, rbp);
+    asm.reg_reg(xor, rax, rax);
+    asm.gen_op0(ret);
+
+    return asm;
+  }
+
   @Test
   public void write() throws IOException {
 
@@ -75,16 +120,23 @@ public class PeWriter3_MapAsm {
     // stub import
     ImportSymbols imports = construct_iat();
 
+    // stub code
+    Asm86 asm = construct_code();
+
     SectionHeadersBuilder sBuilder = new SectionHeadersBuilder();
-    sBuilder.add(".text", new SectionSize(512/*TODO, it's a stub :)*/), SectionsIndexesLight.flags(TEXT));
+    sBuilder.add(".text", new SectionSize(asm.bytesCount()), SectionsIndexesLight.flags(TEXT));
     sBuilder.add(".data", new SectionSize(datas.virtual_size(), datas.raw_size()), SectionsIndexesLight.flags(DATA));
     sBuilder.add(".idata", new SectionSize(imports.total_size()), SectionsIndexesLight.flags(IDATA));
 
     List<ImageSectionHeader> sec_headers = sBuilder.build();
 
     /// set all RVAs
+
     datas.set_rva(sec_headers.get(DATA).VirtualAddress);
     imports.set_rva(sec_headers.get(IDATA).VirtualAddress);
+    asm.commit(sec_headers.get(TEXT).VirtualAddress, imports, datas); /// XXX:commit exactly here! after all data and imports RVAs are ready.
+
+    System.out.println(asm.printBytesInstr());
 
     /// Sections, sizes
     final int num_of_sections = sec_headers.size();
@@ -125,39 +177,6 @@ public class PeWriter3_MapAsm {
       s.write(strm);
     }
 
-    Asm86 asm = new Asm86();
-    String proc2 = "proc2";
-    
-    //main:
-    asm.gen_op1(push, rbp);
-    asm.reg_reg(mov, rbp, rsp);
-    asm.reg_i32(sub, rsp, 64);
-
-    // code+
-    asm.reg_i32(mov, rdx, 70);
-    asm.load(rcx, "%d");
-    asm.call("printf");
-    // code-
-
-    asm.reg_i32(add, rsp, 64);
-    asm.gen_op1(pop, rbp);
-    asm.reg_reg(xor, rax, rax);
-    asm.call_label(proc2);
-    asm.gen_op0(ret);
-    
-    //proc2:
-    proc2 = asm.make_label(proc2);
-    asm.gen_op1(push, rbp);
-    asm.reg_reg(mov, rbp, rsp);
-    asm.reg_i32(sub, rsp, 64);
-    asm.reg_i32(mov, rax, 34);
-    asm.reg_i32(add, rsp, 64);
-    asm.gen_op1(pop, rbp);
-    asm.gen_op0(ret);
-    
-    asm.commit(4096, imports, datas);
-    System.out.println(asm.printBytesInstr());
-
     // 3. section binary data
     write_section(strm, asm.toBytes());
     write_section(strm, datas.build());
@@ -165,7 +184,7 @@ public class PeWriter3_MapAsm {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pewriter3.exe";
+    String filename = dir + "/pewriter5.exe";
     strm.fout(filename);
     chmodX(filename);
 

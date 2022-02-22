@@ -67,6 +67,10 @@ public class Ubuf implements IDataWriter {
     }
     return nbuf;
   }
+  
+  public long val(int at) {
+    return buf[at].v;
+  }
 
   private void out(Uv u) {
 

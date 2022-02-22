@@ -66,7 +66,7 @@ public class TestParseDatas {
   @Test
   public void test() throws StreamReadException, DatabindException, IOException {
 
-    Asm86 asm = new Asm86(4096, imports(), datas());
+    Asm86 asm = new Asm86();
     asm.gen_op1(push, rbp);
     asm.reg_reg(mov, rbp, rsp);
     asm.reg_i32(sub, rsp, 32);
@@ -78,7 +78,7 @@ public class TestParseDatas {
     asm.reg_i32(add, rsp, 32);
     asm.gen_op1(pop, rbp);
     asm.gen_op0(ret);
-    asm.commit();
+    asm.commit(4096, imports(), datas());
 
     int tmp_buffer[] = { 0x55, 0x48, 0x89, 0xe5, 0x48, 0x81, 0xec, 0x20, 0x00, 0x00, 0x00, 0x48, 0x31, 0xc0, 0x48, 0x81,
         0xc4, 0x20, 0x00, 0x00, 0x00, 0x5d, 0xc3, };
