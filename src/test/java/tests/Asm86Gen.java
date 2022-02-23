@@ -240,6 +240,13 @@ public class Asm86Gen {
       }
     }
 
+    // other
+    fw.write("push 0x7fffffff\n");
+    for (String o : new String[] { "push", "pop" })
+      for (String dst : regs64) {
+        fw.write(String.format("%s [%s]\n", o, dst));
+      }
+
     fw.close();
 
     printOpcodes();
@@ -262,11 +269,10 @@ public class Asm86Gen {
     return System.getProperty("user.dir");
   }
 
-  @Ignore
   @Test
   public void test() throws IOException {
-    gen();
-    merge();
+    //gen();
+    //merge();
   }
 
 }

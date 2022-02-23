@@ -146,12 +146,12 @@ public class PeWriter {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pefile.exe";
+    String filename = dir + "/bins/pefile.exe";
     strm.fout(filename);
     chmodX(filename);
 
     File f1 = new File(filename);
-    File f2 = new File(dir + "/evmc.exe");
+    File f2 = new File(dir + "/bins/evmc.exe");
     boolean diff = Diff.findDiff(IO.toBytes(f1), IO.toBytes(f2), false);
     assertFalse(diff);
 

@@ -146,7 +146,7 @@ public class PeWriter2_PlainAsm {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pewriter2.exe";
+    String filename = dir + "/bins/pewriter2.exe";
     strm.fout(filename);
     chmodX(filename);
 

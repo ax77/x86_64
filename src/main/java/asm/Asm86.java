@@ -294,6 +294,13 @@ public class Asm86 {
     final Ubuf buffer = buildBufferHdr(key);
     line(buffer, opc + " " + dst);
   }
+  
+  public void gen_op1(Opc opc, int imm32) {
+    final String key = opc + " @i32";
+    final Ubuf buffer = buildBufferHdr(key);
+    buffer.oi4(imm32);
+    line(buffer, opc + " " + String.format("%d", imm32));
+  }
 
   public String make_label(String name) {
     if (labels.contains(name)) {

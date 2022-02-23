@@ -156,7 +156,7 @@ public class PeWriter3_MapAsm {
     asm.gen_op0(ret);
     
     asm.set_rva(4096, imports, datas);
-    System.out.println(asm.printBytesInstr());
+    //System.out.println(asm.printBytesInstr());
 
     // 3. section binary data
     write_section(strm, asm.toBytes());
@@ -165,7 +165,7 @@ public class PeWriter3_MapAsm {
 
     // write the file.
     String dir = System.getProperty("user.dir");
-    String filename = dir + "/pewriter3.exe";
+    String filename = dir + "/bins/pewriter3.exe";
     strm.fout(filename);
     chmodX(filename);
 

@@ -7,20 +7,15 @@ import static asm.Opc.push;
 import static asm.Opc.ret;
 import static asm.Opc.sub;
 import static asm.Opc.xor;
+import static asm.Reg64.r8;
+import static asm.Reg64.r9;
 import static asm.Reg64.rax;
 import static asm.Reg64.rbp;
 import static asm.Reg64.rcx;
 import static asm.Reg64.rdx;
 import static asm.Reg64.rsp;
-import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IAT;
-import static constants.ImageDirectoryEntry.IMAGE_DIRECTORY_ENTRY_IMPORT;
-import static pe.sections.SectionsIndexesLight.DATA;
-import static pe.sections.SectionsIndexesLight.IDATA;
-import static pe.sections.SectionsIndexesLight.TEXT;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -28,26 +23,11 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
 import asm.Asm86;
-import constants.Alignment;
-import constants.Sizeofs;
-import pe.DosStub;
-import pe.ImageDosHeader;
-import pe.ImageFileHeader;
-import pe.ImageNtHeader64;
-import pe.ImageOptionalHeader64;
-import pe.ImageSectionHeader;
-import pe.PE64;
 import pe.PeMainWriter;
 import pe.datas.DataSymbols;
 import pe.imports.ImageImportByName;
 import pe.imports.ImportDll;
 import pe.imports.ImportSymbols;
-import pe.sections.SectionHeadersBuilder;
-import pe.sections.SectionSize;
-import pe.sections.SectionsIndexesLight;
-import writers.IDataWriter;
-import writers.SizeUtil;
-import writers.Ubuf;
 
 public class PeWriter5_Api {
 
@@ -69,8 +49,9 @@ public class PeWriter5_Api {
     return imports;
   }
 
+  final String fmt = "%d %d %d";
+
   private DataSymbols construct_datas() {
-    String fmt = "%d";
 
     DataSymbols datas = new DataSymbols();
     datas.add(fmt);
@@ -80,6 +61,7 @@ public class PeWriter5_Api {
   private Asm86 construct_code() throws StreamReadException, DatabindException, IOException {
 
     Asm86 asm = new Asm86();
+    String label = "label";
 
     // main:
     asm.gen_op1(push, rbp);
@@ -87,15 +69,24 @@ public class PeWriter5_Api {
     asm.reg_i32(sub, rsp, 64);
 
     // code+
-    asm.reg_i32(mov, rdx, 70);
-    asm.load(rcx, "%d");
+    // Windows calling: rcx,rdx,r8,r9
+    // Unix calling   : rdi,rsi,rdx,rcx,r8,r9
+    asm.gen_op1(push, 2005);
+    asm.gen_op1(push, 2006);
+    asm.gen_op1(push, 2007);
+    asm.gen_op1(pop, r9);
+    asm.gen_op1(pop, r8);
+    asm.gen_op1(pop, rdx);
+    asm.load(rcx, fmt);
     asm.call("printf");
+    asm.reg_i32(mov, rax, 34);
+    asm.jmp(label);
+    asm.reg_i32(mov, rax, 52);
     // code-
 
+    asm.make_label(label);
     asm.reg_i32(add, rsp, 64);
-    asm.reg_i32(mov, rax, 0);
     asm.gen_op1(pop, rbp);
-    asm.reg_reg(xor, rax, rax);
     asm.gen_op0(ret);
 
     return asm;
@@ -111,7 +102,7 @@ public class PeWriter5_Api {
     Asm86 code = construct_code();
 
     PeMainWriter writer = new PeMainWriter(datas, imports, code);
-    writer.write("pewriter5.exe");
+    writer.write("/bins/pewriter5.exe");
 
   }
 

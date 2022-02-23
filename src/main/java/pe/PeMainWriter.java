@@ -50,7 +50,7 @@ public class PeMainWriter {
     /// XXX:commit exactly here! after all data and imports RVAs are ready.
     code.set_rva(sec_headers.get(TEXT).VirtualAddress, imports, datas);
 
-    System.out.println(code.printBytesInstr());
+    //System.out.println(code.printBytesInstr());
 
     /// Sections, sizes
     final int num_of_sections = sec_headers.size();
